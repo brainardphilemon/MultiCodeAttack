@@ -14,7 +14,7 @@ import torch
 from tqdm import tqdm
 from dotenv import load_dotenv
 from all_template_v2 import *
-from gpt_judge import is_refusal, self_sate_judge
+from gpt_judge import is_refusal, self_safe_judge
 from openai_log import IS_THINKING_MODEL_BY_NAME, LLM_MODEL, your_api_key, your_base_url, your_model
 import logging
 from datetime import datetime
@@ -234,7 +234,7 @@ def target_model_query(target_language: str, prompt: str, adaptive_template: str
         j_ppl = 1.0
         return assistant_response_2_no_newline, asr, detect_p, j_ppl
     else:
-        flag, judge_ppl = self_sate_judge(
+        flag, judge_ppl = self_safe_judge(
             assistant_response_2_no_newline.strip(),
             calculate_ppl,
             self_judge=(ppl is not None)
@@ -381,7 +381,8 @@ if __name__ == "__main__":
     parser.add_argument('--top_p', type=float, default=1, help='top_p for the model to generate text')
     parser.add_argument('--max_new_tokens', type=int, default=512, help='max_new_tokens for the model to generate text')
     parser.add_argument('--seed', type=int, default=0, help='seed for the model to generate text')
-    parser.add_argument('--store_path', type=str, help='path to store translated csv file', default='data')     
+    parser.add_argument('--store_path', type=str, help='path to store translated csv file', default='data')
+    parser.add_argument('--num_samples', type=int, default=0, help='limit number of samples (sentence groups) to run; 0 = all')
     args = parser.parse_args()
     
     response_path = f"response/{Victim_MODEL}/llms/adaptive_responses.txt"
@@ -438,7 +439,11 @@ if __name__ == "__main__":
     
     attck_round_number = []
     ATTEMP = 10
-    for sentence_index, phrases in tqdm(list(sentence_groups.items())[last_processed_index + 1:]):
+    _sample_items = list(sentence_groups.items())[last_processed_index + 1:]
+    if getattr(args, "num_samples", 0) and args.num_samples > 0:
+        _sample_items = _sample_items[:args.num_samples]
+        logging.info(f"Limiting run to {len(_sample_items)} sample(s) via --num_samples")
+    for sentence_index, phrases in tqdm(_sample_items):
         retry = 0
         while retry < ATTEMP: 
             try:

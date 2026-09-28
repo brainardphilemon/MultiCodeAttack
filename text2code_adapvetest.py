@@ -12,8 +12,8 @@ import openai
 import torch
 from tqdm import tqdm
 from dotenv import load_dotenv
-from test2code_template import *
-from gpt_judge import is_refusal, self_code_sate_judge
+from text2code_template import *
+from gpt_judge import is_refusal, self_code_safe_judge
 from openai_log import IS_THINKING_MODEL_BY_NAME, LLM_MODEL, your_api_key, your_base_url, your_model
 import logging
 from datetime import datetime
@@ -239,7 +239,7 @@ def target_model_query(
         return result, asr, detect_p, j_ppl
     else:
         # Secondary judge
-        flag, judge_ppl = self_code_sate_judge(
+        flag, judge_ppl = self_code_safe_judge(
             result.strip(), calculate_ppl, self_judge=(ppl is not None and not judge_other)
         )
         if flag:
@@ -382,6 +382,7 @@ if __name__ == "__main__":
     parser.add_argument('--seed', type=int, default=0, help='random seed')
     parser.add_argument('--store_path', type=str, default='data', help='data path')
     parser.add_argument('--judge_other', action='store_true', help='use external judge when needed')
+    parser.add_argument('--num_samples', type=int, default=0, help='limit number of samples (sentence groups) to run; 0 = all')
     args = parser.parse_args()
 
     if LLM_MODEL in ["Deepseek-coder-7b", "llama-2-13b"]:
@@ -445,7 +446,11 @@ if __name__ == "__main__":
     attck_round_number = []
     ATTEMP = 10
 
-    for sentence_index, phrases in tqdm(list(sentence_groups.items())[last_processed_index + 1:]):
+    _sample_items = list(sentence_groups.items())[last_processed_index + 1:]
+    if getattr(args, "num_samples", 0) and args.num_samples > 0:
+        _sample_items = _sample_items[:args.num_samples]
+        logging.info(f"Limiting run to {len(_sample_items)} sample(s) via --num_samples")
+    for sentence_index, phrases in tqdm(_sample_items):
         retry = 0
         while retry < ATTEMP:
             try:

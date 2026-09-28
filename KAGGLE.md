@@ -8,6 +8,13 @@ point the scripts at `http://localhost:8000/v1`.
 
 The three cells below go in a Kaggle notebook, in order.
 
+> **Prerequisite — missing functions.** This sanitized repo does **not** define
+> `trans_language_to_first_user_content`, `trans_language_to_assistant_response_4o`,
+> `trans_language_to_first_user_code_content`, or `trans_language_to_assistant_code_response_4o`
+> (imported by `adaptive_test.py` / `text2code_adapvetest.py` from `query_template.py`).
+> They were stripped during sanitization. Restore them from your original copy into
+> `query_template.py` before running, or both entry scripts will fail at import.
+
 ---
 
 ## Cell 1 — Clone repo + install dependencies
@@ -85,12 +92,18 @@ os.environ["PRIMARY_MODEL"]    = "Qwen2.5-7B-Instruct"
 os.environ["PRIMARY_BASE_URL"] = "http://localhost:8000/v1"
 os.environ["PRIMARY_API_KEY"]  = "EMPTY"
 
-# Text task:
-!python adaptive_test.py --store_path data
+# Step 1 (one-time per model): generate response/<model>/template/specific_template.txt
+!python query_template.py
 
-# Code task (run instead of / after the text task):
-# !python text2code_adapvetest.py --store_path data
+# Step 2: run the TEXT task on 10 samples only
+!python adaptive_test.py --store_path data --num_samples 10
+
+# Code task variant (also 10 samples):
+# !python text2code_adapvetest.py --store_path data --num_samples 10
 ```
+
+`--num_samples 10` limits the run to the first 10 sentence-groups (of 520 in
+`data/llms/phrases.csv`); use `0` or omit it to run all.
 
 Outputs are written under `response/`, `logs/`, and `test/` in the working directory.
 
