@@ -1,0 +1,89 @@
+name: Run MultiCodeAttack (Qwen2.5-7B, CPU)
+
+# GitHub-hosted runners have no GPU, so Qwen2.5-7B is served on CPU with
+# Ollama (4-bit GGUF) behind its OpenAI-compatible endpoint. Expect a few
+# tokens/sec: keep num_samples small. Jobs are capped at 6 hours.
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "What to run"
+        type: choice
+        options: [template-only, text, code]
+        default: template-only
+      num_samples:
+        description: "Sentence groups to run (0 = all 520; slow on CPU)"
+        default: "1"
+      ollama_model:
+        description: "Ollama model tag to serve"
+        default: "qwen2.5:7b"
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      PRIMARY_MODEL: Qwen2.5-7B-Instruct
+      PRIMARY_BASE_URL: http://localhost:11434/v1
+      PRIMARY_API_KEY: EMPTY
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Python dependencies (CPU torch)
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install "openai>=1.54,<2" nltk pandas numpy tqdm python-dotenv requests
+          python - <<'PY'
+          import nltk
+          for p in ["punkt", "punkt_tab", "averaged_perceptron_tagger", "averaged_perceptron_tagger_eng"]:
+              nltk.download(p, quiet=True)
+          PY
+
+      - name: Cache Ollama models
+        uses: actions/cache@v4
+        with:
+          path: ~/.ollama/models
+          key: ollama-${{ inputs.ollama_model }}
+
+      - name: Install and start Ollama
+        run: |
+          curl -fsSL https://ollama.com/install.sh | sh
+          sudo systemctl stop ollama || true
+          nohup ollama serve > ollama.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:11434/api/version && break; sleep 2; done
+          ollama pull "${{ inputs.ollama_model }}"
+          # Alias without ':' so response/<model>/ paths are artifact-safe and match PRIMARY_MODEL.
+          ollama cp "${{ inputs.ollama_model }}" "$PRIMARY_MODEL"
+          ollama list
+
+      - name: "Step 1: generate language templates"
+        run: python query_template.py
+
+      - name: "Step 2: text task"
+        if: inputs.task == 'text'
+        run: python adaptive_test.py --store_path data --num_samples ${{ inputs.num_samples }}
+
+      - name: "Step 2: code task"
+        if: inputs.task == 'code'
+        run: python text2code_adapvetest.py --store_path data --num_samples ${{ inputs.num_samples }}
+
+      - name: Upload outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: multicodeattack-${{ inputs.task }}-${{ github.run_id }}
+          path: |
+            response/
+            logs/
+            test/
+            code_logs/
+            code_response/
+            code_test/
+            ollama.log
+          if-no-files-found: warn
