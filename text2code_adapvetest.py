@@ -18,7 +18,11 @@ from openai_log import IS_THINKING_MODEL_BY_NAME, LLM_MODEL, your_api_key, your_
 import logging
 from datetime import datetime
 
-from query_template import trans_language_to_assistant_code_response_4o, trans_language_to_first_user_code_content
+# NOTE: trans_language_to_first_user_code_content / trans_language_to_assistant_code_response_4o
+# are not defined in this (sanitized) release. They are only used to build few-shot payloads
+# for EXTRA languages discovered in specific_template.txt; the 9 built-in languages already
+# have their payloads as literals (see *_first_user_content_4o / *_assistant_response_4o above).
+# We therefore skip extra languages instead of importing the missing builders.
 from utility import AdaptiveThreshold, Template, TemplatePool, UCB1Bandit, load_checkpoint, save_checkpoint, setup_logging
 
 """
@@ -405,14 +409,15 @@ if __name__ == "__main__":
         language = template['language']
         code = template['template']
         if language not in STRUCT_KEYS:
-            STRUCT_KEYS.append(language)
-            STRUCT_TEMPLATES[language] = Template(text=code, language=language)
-            first_user_content_map_4o[language] = trans_language_to_first_user_code_content(
-                lang_name=language, code_template=code
+            # Extra language without a built-in few-shot payload, and the payload
+            # builders were stripped from this release -> skip it so the run uses
+            # only the 9 built-in languages that already have literal payloads.
+            logging.warning(
+                "Skipping extra language %r: no built-in payload and "
+                "trans_language_to_*_code_* builders are unavailable in this release.",
+                language,
             )
-            assistant_response_map_4o[language] = trans_language_to_assistant_code_response_4o(
-                lang_name=language
-            )
+            continue
 
     # Group phrases by sentence_index
     sentence_groups = {}
