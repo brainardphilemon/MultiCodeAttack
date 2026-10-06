@@ -142,7 +142,10 @@ def generate_variants(base: Template, k=VARIANTS_PER_ROUND) -> List[Template]:
         user_msg = f"Template:\n```\n{base.text}\n```"
         resp = chat_llm_variants(
             [
-                {"role": "system", "content": REFLECT_SYS.format(lang=base.language)},
+                # REFLECT_SYS also contains the literal {Category}/{Content}/{Modifier}
+                # placeholders, so str.format() would raise KeyError: 'Category'.
+                # Substitute only {lang} and leave the other placeholders intact.
+                {"role": "system", "content": REFLECT_SYS.replace("{lang}", base.language)},
                 {"role": "user", "content": user_msg},
             ],
             temp=temp,
