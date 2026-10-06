@@ -1,7 +1,7 @@
 # Running MultiCodeAttack on Kaggle
 
 The experiment scripts talk to an **OpenAI-compatible endpoint**. On Kaggle we serve
-Qwen 2.5 7B locally with **vLLM** (downloaded from Hugging Face on first launch), then
+Qwen 2.5 3B locally with **vLLM** (downloaded from Hugging Face on first launch), then
 point the scripts at `http://localhost:8000/v1`.
 
 **Recommended accelerator:** `GPU T4 x2` (Notebook settings → Accelerator). Internet must be **ON**.
@@ -45,15 +45,15 @@ for pkg in ["punkt", "punkt_tab", "averaged_perceptron_tagger", "averaged_percep
         print("nltk", pkg, "->", e)
 ```
 
-## Cell 2 — Start the vLLM server (downloads Qwen 2.5 7B from HF)
+## Cell 2 — Start the vLLM server (downloads Qwen 2.5 3B from HF)
 
 ```python
 import subprocess, time, requests, os
 
-# AWQ 4-bit quant (~5.5 GB) fits on a single T4 and works on T4 (sm75).
+# AWQ 4-bit quant (~3 GB) fits on a single T4 and works on T4 (sm75).
 server = subprocess.Popen([
-    "vllm", "serve", "Qwen/Qwen2.5-7B-Instruct-AWQ",
-    "--served-model-name", "Qwen2.5-7B-Instruct",
+    "vllm", "serve", "Qwen/Qwen2.5-3B-Instruct-AWQ",
+    "--served-model-name", "Qwen2.5-3B-Instruct",
     "--quantization", "awq",
     "--port", "8000",
     "--max-model-len", "4096",
@@ -76,8 +76,8 @@ else:
 
 ```python
 # server = subprocess.Popen([
-#     "vllm", "serve", "Qwen/Qwen2.5-7B-Instruct",
-#     "--served-model-name", "Qwen2.5-7B-Instruct",
+#     "vllm", "serve", "Qwen/Qwen2.5-3B-Instruct",
+#     "--served-model-name", "Qwen2.5-3B-Instruct",
 #     "--dtype", "float16",
 #     "--tensor-parallel-size", "2",
 #     "--port", "8000", "--max-model-len", "4096",
@@ -88,7 +88,7 @@ else:
 
 ```python
 %cd /kaggle/working/MultiCodeAttack
-os.environ["PRIMARY_MODEL"]    = "Qwen2.5-7B-Instruct"
+os.environ["PRIMARY_MODEL"]    = "Qwen2.5-3B-Instruct"
 os.environ["PRIMARY_BASE_URL"] = "http://localhost:8000/v1"
 os.environ["PRIMARY_API_KEY"]  = "EMPTY"
 
@@ -112,6 +112,6 @@ Outputs are written under `response/`, `logs/`, and `test/` in the working direc
 ### Notes
 - `PRIMARY_*` env vars drive the attacker, judge, and victim roles (all Qwen here). To use a
   separate judge model, set `SECONDARY_MODEL` / `SECONDARY_BASE_URL` / `SECONDARY_API_KEY`.
-- The served model name (`Qwen2.5-7B-Instruct`) must match `PRIMARY_MODEL`.
+- The served model name (`Qwen2.5-3B-Instruct`) must match `PRIMARY_MODEL`.
 - `--served-model-name` avoids a `/` in the name so output paths like `response/<model>/...` stay flat.
 - P100 does not support AWQ (sm60); use the full-precision alternative in Cell 2 there, or pick T4 x2.

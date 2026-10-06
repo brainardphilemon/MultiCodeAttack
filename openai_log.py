@@ -18,7 +18,7 @@ from openai import (
 # Configuration via environment
 # -------------------------------
 # Primary endpoint (used by ask_response)
-PRIMARY_MODEL = os.getenv("PRIMARY_MODEL", "Qwen2.5-7B-Instruct")
+PRIMARY_MODEL = os.getenv("PRIMARY_MODEL", "Qwen2.5-3B-Instruct")
 PRIMARY_BASE_URL = os.getenv("PRIMARY_BASE_URL", "http://localhost:8000/v1")
 PRIMARY_API_KEY = os.getenv("PRIMARY_API_KEY", "EMPTY")
 
@@ -45,6 +45,7 @@ IS_THINKING_MODEL_BY_NAME = {
     # Open models served behind an OpenAI-compatible endpoint
     "mlx-community/Qwen2.5-7B-Instruct-4bit": False,
     "Qwen2.5-7B-Instruct": False,
+    "Qwen2.5-3B-Instruct": False,
     "Qwen2.5-Coder-7B-Instruct": False,
     "Qwen2.5-Coder-14B-Instruct": False,
     "Qwen3-8B": True,

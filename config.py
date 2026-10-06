@@ -22,6 +22,7 @@ class Model(Enum):
     gpt_3_5 = "gpt-3.5-turbo"
     gpt_4 = "gpt-4o-2024-11-20"
     claude_3_5 = "claude-3-5-sonnet-20241022"
+    qwen2_5_3b = "Qwen2.5-3B-Instruct"
     qwen2_5_coder_7b = "Qwen2.5-Coder-7B-Instruct"
     qwen2_5_coder_14b = "Qwen2.5-Coder-14B-Instruct"
     qwen3_14b = "Qwen3-14B"
@@ -47,6 +48,7 @@ Concrete_MODEL_NAMES: dict[Model, str] = {
     Model.gpt_3_5: "gpt-3.5-turbo",
     Model.gpt_4: "gpt-4o-2024-11-20",
     Model.claude_3_5: "claude-3-5-sonnet-20241022",
+    Model.qwen2_5_3b: "Qwen/Qwen2.5-3B-Instruct",
     Model.qwen2_5_coder_7b: "Qwen/Qwen2.5-Coder-7B-Instruct",
     Model.qwen2_5_coder_14b: "<LOCAL_OR_HUB_ID_FOR_QWEN2.5-CODER-14B-INSTRUCT>",
     Model.qwen3_14b: "Qwen/Qwen3-14B",
@@ -73,6 +75,7 @@ FASTCHAT_TEMPLATE_NAMES: dict[Model, str] = {
     Model.llama_3_1_8b: "llama-3-chat",
     Model.llama2_70b: "llama-2-chat",
     Model.llama2_13b: "llama-2-chat",
+    Model.qwen2_5_3b: "qwen2",
     Model.qwen2_5_coder_7b: "qwen2",
     Model.qwen2_5_coder_14b: "qwen2",
     Model.qwen3_8b: "qwen3",
@@ -109,6 +112,7 @@ API_KEY_NAMES: dict[Model, str | None] = {
     Model.gemini_2_0_flash: _env("GEMINI_API_KEY", None),
     Model.vicuna: _env("DEFAULT_API_KEY", None),
     Model.llama_3_1_8b: _env("DEFAULT_API_KEY", None),
+    Model.qwen2_5_3b: _env("DEFAULT_API_KEY", None),
     Model.qwen2_5_coder_7b: _env("DEFAULT_API_KEY", None),
     Model.qwen2_5_coder_14b: _env("DEFAULT_API_KEY", None),
     Model.qwen3_8b: _env("DEFAULT_API_KEY", None),
@@ -130,6 +134,7 @@ BASE_URLS: dict[Model, str] = {
     Model.llama_3_1_8b: _env("LOCAL_ENDPOINT_1", "<LOCAL_ENDPOINT>"),
     Model.llama2_70b: _env("LOCAL_ENDPOINT_2", "<LOCAL_ENDPOINT>"),
     Model.llama2_13b: _env("LOCAL_ENDPOINT_3", "<LOCAL_ENDPOINT>"),
+    Model.qwen2_5_3b: _env("LOCAL_ENDPOINT_4", "<LOCAL_ENDPOINT>"),
     Model.qwen2_5_coder_7b: _env("LOCAL_ENDPOINT_4", "<LOCAL_ENDPOINT>"),
     Model.qwen2_5_coder_14b: _env("LOCAL_ENDPOINT_5", "<LOCAL_ENDPOINT>"),
     Model.qwen3_8b: _env("LOCAL_ENDPOINT_6", "<LOCAL_ENDPOINT>"),
@@ -150,6 +155,7 @@ IS_THINKING_MODEL: dict[Model, bool] = {
     Model.gemini_2_0_flash: False,
     Model.vicuna: False,
     Model.llama_3_1_8b: False,
+    Model.qwen2_5_3b: False,
     Model.qwen2_5_coder_7b: False,
     Model.qwen2_5_coder_14b: False,
     Model.qwen3_8b: True,
