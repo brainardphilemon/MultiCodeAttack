@@ -113,13 +113,13 @@ def query_languate_template(language):
     while True:
         response = ask_response(
             system_content=template_generation_system_prompt,
-            user_content=template_generation_prompt.format(TargetLanguage=language)
+            # The prompt contains literal JSON braces and {Category}-style
+            # placeholders, so str.format() can't be used here.
+            user_content=template_generation_prompt.replace("{TargetLanguage}", language)
         )
         response_content = response.choices[0].message.content.strip()
-        if "json" in response_content:
-            json_text = re.search(r'```json\s*(\{.*?\})\s*```', response_content, re.DOTALL).group(1)
-        else:
-            json_text = response_content
+        match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_content, re.DOTALL)
+        json_text = match.group(1) if match else response_content
         print(json_text)
         try:
             data = json.loads(json_text)
